@@ -1,0 +1,35 @@
+{
+  "name": "claudy-theme",
+  "displayName": "Claudy Theme",
+  "description": "Claudy Dark — tema oscuro calido con acento violeta, inspirado en el look JetBrains Islands.",
+  "version": "0.1.0",
+  "publisher": "replace-with-your-publisher",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "dark",
+    "theme",
+    "color theme",
+    "claudy",
+    "purple"
+  ],
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/josbert2/claudy-theme"
+  },
+  "contributes": {
+    "themes": [
+      {
+        "label": "Claudy Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/claudy-dark.json"
+      }
+    ]
+  }
+}
