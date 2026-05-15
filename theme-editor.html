@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claudy Theme · Editor de colores</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --editorBg:#18171e; --panelBg:#141319; --fg:#bcbec4;
+    --selection:#322f48; --lineHighlight:#252629; --lineNumber:#4e5157;
+    --cursor:#bcbec4; --accent:#8a6cf0;
+    --comment:#7a7e85; --string:#6aab73; --keyword:#cf8e6d;
+    --function:#5c9ef0; --type:#c77dbb; --number:#2aacb8; --variable:#bcbec4;
+  }
+  body {
+    font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    background:#0f0e13; color:#d9d7e0; height:100vh; display:flex; flex-direction:column;
+  }
+  header {
+    padding:14px 22px; border-bottom:1px solid #2a2733;
+    display:flex; align-items:center; gap:10px;
+  }
+  header .dot { width:14px; height:14px; border-radius:5px; background:var(--accent); }
+  header h1 { font-size:15px; font-weight:600; }
+  header span { font-size:12px; color:#7e7b8c; }
+  .app { flex:1; display:flex; min-height:0; }
+
+  /* ---- panel de controles ---- */
+  .controls {
+    width:320px; flex-shrink:0; overflow-y:auto;
+    border-right:1px solid #2a2733; padding:16px;
+  }
+  .group-title {
+    font-size:11px; text-transform:uppercase; letter-spacing:1px;
+    color:#7e7b8c; margin:18px 0 8px; font-weight:700;
+  }
+  .group-title:first-child { margin-top:0; }
+  .ctl { display:flex; align-items:center; gap:10px; padding:5px 0; }
+  .ctl label { flex:1; font-size:13px; }
+  .ctl input[type=color] {
+    width:30px; height:30px; border:none; border-radius:8px;
+    background:none; cursor:pointer; padding:0;
+  }
+  .ctl input[type=color]::-webkit-color-swatch { border:1px solid #3a3745; border-radius:8px; }
+  .ctl input[type=color]::-moz-color-swatch { border:1px solid #3a3745; border-radius:8px; }
+  .ctl input[type=text] {
+    width:78px; background:#1b1a22; border:1px solid #2a2733; color:#d9d7e0;
+    border-radius:6px; padding:5px 7px; font-family:ui-monospace, monospace; font-size:12px;
+  }
+  .actions { margin-top:22px; display:flex; gap:8px; }
+  .actions button {
+    flex:1; padding:9px; border-radius:8px; border:none; cursor:pointer;
+    font-size:12px; font-weight:600;
+  }
+  .btn-export { background:var(--accent); color:#fff; }
+  .btn-reset { background:#26242f; color:#d9d7e0; }
+
+  /* ---- preview ---- */
+  .preview { flex:1; padding:24px; overflow:auto; display:flex; flex-direction:column; gap:16px; }
+  .vscode {
+    border-radius:12px; overflow:hidden; border:1px solid #2a2733;
+    box-shadow:0 12px 40px rgba(0,0,0,.5); flex-shrink:0;
+    background:var(--editorBg); display:flex; flex-direction:column; min-height:420px;
+  }
+  .vs-tabs { display:flex; background:var(--panelBg); }
+  .vs-tab {
+    padding:9px 18px; font-size:12px; color:#6f6c7d;
+    border-right:1px solid #00000033;
+  }
+  .vs-tab.active { background:var(--editorBg); color:var(--fg); }
+  .vs-body { display:flex; flex:1; }
+  .vs-activitybar {
+    width:46px; background:var(--panelBg); padding:10px 0;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+  }
+  .vs-ai { width:24px; height:24px; border-radius:6px; background:#ffffff14; }
+  .vs-ai.active { background:var(--accent); }
+  .vs-sidebar { width:170px; background:var(--editorBg); padding:12px 8px; border-right:1px solid #ffffff0d; }
+  .vs-side-title { font-size:10px; letter-spacing:1px; color:#6f6c7d; margin-bottom:8px; padding-left:6px; }
+  .vs-file { font-size:12.5px; color:var(--fg); padding:3px 6px; border-radius:5px; }
+  .vs-file.indent { padding-left:20px; }
+  .vs-file.sel { background:var(--accent); color:#fff; }
+  .vs-editor { flex:1; display:flex; font-family:ui-monospace,"Cascadia Code",monospace; font-size:13px; }
+  .vs-gutter {
+    padding:14px 10px 14px 16px; text-align:right; color:var(--lineNumber);
+    user-select:none; line-height:1.65;
+  }
+  .vs-code { padding:14px 16px; line-height:1.65; flex:1; white-space:pre; }
+  .vs-code .ln { display:block; }
+  .vs-code .ln.active { background:var(--lineHighlight); margin:0 -16px; padding:0 16px; }
+  .cm{color:var(--comment);font-style:italic} .st{color:var(--string)}
+  .kw{color:var(--keyword)} .fn{color:var(--function)} .ty{color:var(--type)}
+  .nu{color:var(--number)} .va{color:var(--variable)}
+  .sel{ background:var(--selection); border-radius:2px; }
+  .caret { display:inline-block; width:2px; height:1em; background:var(--cursor);
+           vertical-align:text-bottom; }
+  .vs-statusbar { background:var(--accent); color:#fff; font-size:11px; padding:4px 14px; }
+
+  .export-box { display:none; }
+  .export-box textarea {
+    width:100%; height:160px; background:#1b1a22; color:#d9d7e0;
+    border:1px solid #2a2733; border-radius:8px; padding:10px;
+    font-family:ui-monospace,monospace; font-size:11px; resize:vertical;
+  }
+  .export-box .copy { margin-top:8px; padding:7px 14px; border:none; border-radius:7px;
+    background:#26242f; color:#d9d7e0; cursor:pointer; font-size:12px; }
+  .hint { font-size:11px; color:#6f6c7d; margin-top:6px; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="dot"></div>
+    <h1>Claudy Theme</h1>
+    <span>· editor de colores</span>
+  </header>
+  <div class="app">
+    <aside class="controls" id="controls"></aside>
+    <main class="preview">
+      <div class="vscode">
+        <div class="vs-tabs">
+          <div class="vs-tab active">Counter.tsx</div>
+          <div class="vs-tab">utils.ts</div>
+          <div class="vs-tab">App.tsx</div>
+        </div>
+        <div class="vs-body">
+          <div class="vs-activitybar">
+            <div class="vs-ai active"></div>
+            <div class="vs-ai"></div>
+            <div class="vs-ai"></div>
+          </div>
+          <div class="vs-sidebar">
+            <div class="vs-side-title">EXPLORADOR</div>
+            <div class="vs-file">src</div>
+            <div class="vs-file indent sel">Counter.tsx</div>
+            <div class="vs-file indent">utils.ts</div>
+            <div class="vs-file">themes</div>
+            <div class="vs-file indent">claudy-dark.json</div>
+          </div>
+          <div class="vs-editor">
+            <div class="vs-gutter">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</div>
+            <pre class="vs-code"><span class="ln"><span class="cm">// Claudy Dark · preview en vivo</span></span><span class="ln"> </span><span class="ln"><span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;</span><span class="ln"> </span><span class="ln"><span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };</span><span class="ln"> </span><span class="ln"><span class="kw">function</span> <span class="fn">Counter</span>({ <span class="va">start</span> = <span class="nu">0</span> }: <span class="ty">Props</span>) {</span><span class="ln active">  <span class="kw">const</span> [<span class="va">count</span>, <span class="va">setCount</span>] = <span class="fn">useState</span>(<span class="sel">start</span>)<span class="caret"></span>;</span><span class="ln">  <span class="cm">// duplica el valor</span></span><span class="ln">  <span class="kw">return</span> <span class="va">count</span> * <span class="nu">2</span>;</span><span class="ln">}</span></pre>
+          </div>
+        </div>
+        <div class="vs-statusbar">Claudy Dark · UTF-8 · TypeScript</div>
+      </div>
+      <div class="export-box" id="exportBox">
+        <textarea id="exportText" readonly></textarea>
+        <button class="copy" id="copyBtn">Copiar</button>
+        <div class="hint">Pegá esto dentro de las llaves de tu settings.json (aplica en vivo), o pasámelo y lo dejo fijo en el tema.</div>
+      </div>
+    </main>
+  </div>
+
+<script>
+const COLORS = {
+  editorBg:    { label:'Fondo del editor', value:'#18171e', group:'Fondos' },
+  panelBg:     { label:'Fondo de tabs',    value:'#141319', group:'Fondos' },
+  fg:          { label:'Texto',            value:'#bcbec4', group:'Fondos' },
+  selection:   { label:'Selección',        value:'#322f48', group:'Fondos' },
+  lineHighlight:{label:'Línea actual',     value:'#252629', group:'Fondos' },
+  lineNumber:  { label:'Números de línea', value:'#4e5157', group:'Fondos' },
+  cursor:      { label:'Cursor',           value:'#bcbec4', group:'Fondos' },
+  accent:      { label:'Acento (violeta)', value:'#8a6cf0', group:'Acento' },
+  comment:     { label:'Comentarios',      value:'#7a7e85', group:'Sintaxis' },
+  string:      { label:'Strings',          value:'#6aab73', group:'Sintaxis' },
+  keyword:     { label:'Keywords',         value:'#cf8e6d', group:'Sintaxis' },
+  function:    { label:'Funciones',        value:'#5c9ef0', group:'Sintaxis' },
+  type:        { label:'Tipos',            value:'#c77dbb', group:'Sintaxis' },
+  number:      { label:'Números',          value:'#2aacb8', group:'Sintaxis' },
+  variable:    { label:'Variables',        value:'#bcbec4', group:'Sintaxis' },
+};
+const DEFAULTS = Object.fromEntries(Object.entries(COLORS).map(([k,v])=>[k,v.value]));
+
+// mapeo color semántico -> claves reales de VSCode
+const UI_MAP = {
+  editorBg:['editor.background','sideBar.background','activityBar.background','panel.background','statusBar.noFolderBackground','titleBar.activeBackground','tab.activeBackground','terminal.background'],
+  panelBg:['tab.inactiveBackground','editorGroupHeader.tabsBackground'],
+  fg:['editor.foreground','foreground','tab.activeForeground','activityBar.foreground','sideBar.foreground'],
+  accent:['focusBorder','button.background','badge.background','activityBarBadge.background','progressBar.background','textLink.foreground','statusBar.background'],
+  selection:['editor.selectionBackground'],
+  lineHighlight:['editor.lineHighlightBackground'],
+  lineNumber:['editorLineNumber.foreground'],
+  cursor:['editorCursor.foreground'],
+};
+const SYNTAX_MAP = { comment:'comments', string:'strings', keyword:'keywords', function:'functions', type:'types', number:'numbers', variable:'variables' };
+
+const root = document.documentElement;
+function apply(){ for(const k in COLORS) root.style.setProperty('--'+k, COLORS[k].value); }
+
+function build(){
+  const c = document.getElementById('controls');
+  let lastGroup = '';
+  for(const key in COLORS){
+    const col = COLORS[key];
+    if(col.group !== lastGroup){
+      const t = document.createElement('div');
+      t.className = 'group-title'; t.textContent = col.group;
+      c.appendChild(t); lastGroup = col.group;
+    }
+    const row = document.createElement('div'); row.className = 'ctl';
+    const lab = document.createElement('label'); lab.textContent = col.label;
+    const pick = document.createElement('input'); pick.type='color'; pick.value=col.value;
+    const hex = document.createElement('input'); hex.type='text'; hex.value=col.value;
+    pick.oninput = ()=>{ col.value=pick.value; hex.value=pick.value; apply(); };
+    hex.oninput = ()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hex.value)){ col.value=hex.value; pick.value=hex.value; apply(); } };
+    row.append(lab, pick, hex); c.appendChild(row);
+  }
+  const act = document.createElement('div'); act.className='actions';
+  const exp = document.createElement('button'); exp.className='btn-export'; exp.textContent='Exportar';
+  const rst = document.createElement('button'); rst.className='btn-reset'; rst.textContent='Reset';
+  exp.onclick = doExport;
+  rst.onclick = ()=>{ for(const k in COLORS) COLORS[k].value=DEFAULTS[k]; apply(); build2(); };
+  act.append(exp, rst); c.appendChild(act);
+}
+function build2(){ document.getElementById('controls').innerHTML=''; build(); }
+
+function doExport(){
+  const ui = {};
+  for(const k in UI_MAP) for(const vsKey of UI_MAP[k]) ui[vsKey] = COLORS[k].value;
+  const syn = {};
+  for(const k in SYNTAX_MAP) syn[SYNTAX_MAP[k]] = COLORS[k].value;
+  const out =
+    '"workbench.colorCustomizations": {\n  "[Claudy Dark]": ' +
+      JSON.stringify(ui, null, 2).replace(/\n/g,'\n  ') + '\n},\n' +
+    '"editor.tokenColorCustomizations": {\n  "[Claudy Dark]": ' +
+      JSON.stringify(syn, null, 2).replace(/\n/g,'\n  ') + '\n}';
+  document.getElementById('exportText').value = out;
+  document.getElementById('exportBox').style.display = 'block';
+}
+document.getElementById('copyBtn').onclick = ()=>{
+  const t = document.getElementById('exportText');
+  t.select(); document.execCommand('copy');
+  document.getElementById('copyBtn').textContent = 'Copiado';
+  setTimeout(()=>document.getElementById('copyBtn').textContent='Copiar', 1500);
+};
+
+build();
+apply();
+</script>
+</body>
+</html>
