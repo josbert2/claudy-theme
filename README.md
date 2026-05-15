@@ -31,6 +31,38 @@ Después, activá el tema: `Ctrl+K Ctrl+T` → elegí **Claudy Dark**.
 | Números | `#2aacb8` |
 | Comentarios | `#7a7e85` |
 
+## Glass Mode (opcional)
+
+Claudy Dark trae además un **modo glass**: paneles flotantes con esquinas
+redondeadas, bordes de vidrio y sombras —el look de los IDE modernos.
+
+Es **activable** y se apoya en la extensión
+[Custom UI Style](https://marketplace.visualstudio.com/items?itemName=subframe7536.custom-ui-style),
+que inyecta CSS en VSCode.
+
+### Instalar
+
+```
+./glass/install-glass.sh
+```
+
+El script instala la extensión Custom UI Style. Después:
+
+1. Abrí tu `settings.json` (Command Palette → *Preferences: Open User Settings (JSON)*).
+2. Pegá adentro el contenido de [`glass/claudy-glass.jsonc`](glass/claudy-glass.jsonc).
+3. Command Palette → **Custom UI Style: Enable** → recargá VSCode.
+
+### Activar / desactivar
+
+El glass se prende y apaga sin tocar nada más:
+
+- **Apagar:** Command Palette → *Custom UI Style: Disable* → recargar.
+- **Encender:** Command Palette → *Custom UI Style: Enable* → recargar.
+
+> Custom UI Style parchea VSCode, así que vas a ver una advertencia de
+> "instalación corrupta". Es esperado — descartala. Tras cada update de VSCode
+> hay que volver a hacer *Enable*.
+
 ## Créditos
 
 Claudy Dark deriva de [Islands Dark](https://github.com/bwya77/vscode-dark-islands)
