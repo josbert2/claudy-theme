@@ -12,7 +12,7 @@ Desde el Marketplace: buscá **"Claudy Theme"**.
 Manual (`.vsix`):
 
 ```
-code --install-extension claudy-theme-0.1.0.vsix
+code --install-extension claudy-dark-0.1.0.vsix
 ```
 
 Después, activá el tema: `Ctrl+K Ctrl+T` → elegí **Claudy Dark**.
