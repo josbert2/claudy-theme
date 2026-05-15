@@ -3,7 +3,7 @@
   "displayName": "Claudy Theme",
   "description": "Claudy Dark — tema oscuro calido con acento violeta, inspirado en el look JetBrains Islands.",
   "version": "0.1.0",
-  "publisher": "replace-with-your-publisher",
+  "publisher": "josbert",
   "license": "MIT",
   "engines": {
     "vscode": "^1.60.0"
