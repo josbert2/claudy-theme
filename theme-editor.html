@@ -5,248 +5,264 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Claudy Theme · Editor de colores</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
   :root {
-    --editorBg:#18171e; --panelBg:#141319; --fg:#bcbec4;
-    --selection:#322f48; --lineHighlight:#252629; --lineNumber:#4e5157;
-    --cursor:#bcbec4; --accent:#8a6cf0;
-    --comment:#7a7e85; --string:#6aab73; --keyword:#cf8e6d;
-    --function:#5c9ef0; --type:#c77dbb; --number:#2aacb8; --variable:#bcbec4;
+    --editorBg:#18171e; --tabsBg:#141319; --text:#bcbec4; --selection:#322f48;
+    --lineHl:#252629; --lineNumber:#4e5157; --borders:#3c3f41; --accent:#8a6cf0;
+    --comment:#7a7e85; --string:#6aab73; --keyword:#cf8e6d; --function:#5c9ef0;
+    --type:#c77dbb; --number:#2aacb8; --decorator:#bbb529;
+    --error:#f75464; --warning:#e8a33e; --gitAdded:#73b00a;
   }
-  body {
-    font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-    background:#0f0e13; color:#d9d7e0; height:100vh; display:flex; flex-direction:column;
-  }
-  header {
-    padding:14px 22px; border-bottom:1px solid #2a2733;
-    display:flex; align-items:center; gap:10px;
-  }
+  body { font-family:ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+    background:#0f0e13; color:#d9d7e0; height:100vh; display:flex; flex-direction:column; }
+  header { padding:13px 22px; border-bottom:1px solid #2a2733;
+    display:flex; align-items:center; gap:10px; }
   header .dot { width:14px; height:14px; border-radius:5px; background:var(--accent); }
   header h1 { font-size:15px; font-weight:600; }
-  header span { font-size:12px; color:#7e7b8c; }
+  header .sub { font-size:12px; color:#7e7b8c; flex:1; }
+  #status { font-size:12px; color:var(--gitAdded); opacity:0; transition:opacity .3s; }
   .app { flex:1; display:flex; min-height:0; }
 
-  /* ---- panel de controles ---- */
-  .controls {
-    width:320px; flex-shrink:0; overflow-y:auto;
-    border-right:1px solid #2a2733; padding:16px;
-  }
-  .group-title {
-    font-size:11px; text-transform:uppercase; letter-spacing:1px;
-    color:#7e7b8c; margin:18px 0 8px; font-weight:700;
-  }
-  .group-title:first-child { margin-top:0; }
-  .ctl { display:flex; align-items:center; gap:10px; padding:5px 0; }
+  /* ---- controles ---- */
+  .controls { width:312px; flex-shrink:0; overflow-y:auto; border-right:1px solid #2a2733; padding:14px; }
+  .gtitle { font-size:11px; text-transform:uppercase; letter-spacing:1px;
+    color:#7e7b8c; margin:16px 0 6px; font-weight:700; }
+  .gtitle:first-child { margin-top:0; }
+  .ctl { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:7px;
+    cursor:default; transition:background .15s; }
+  .ctl:hover { background:#1c1b24; }
   .ctl label { flex:1; font-size:13px; }
-  .ctl input[type=color] {
-    width:30px; height:30px; border:none; border-radius:8px;
-    background:none; cursor:pointer; padding:0;
-  }
+  .ctl input[type=color] { width:30px; height:30px; border:none; border-radius:8px;
+    background:none; cursor:pointer; padding:0; }
   .ctl input[type=color]::-webkit-color-swatch { border:1px solid #3a3745; border-radius:8px; }
-  .ctl input[type=color]::-moz-color-swatch { border:1px solid #3a3745; border-radius:8px; }
-  .ctl input[type=text] {
-    width:78px; background:#1b1a22; border:1px solid #2a2733; color:#d9d7e0;
-    border-radius:6px; padding:5px 7px; font-family:ui-monospace, monospace; font-size:12px;
-  }
-  .actions { margin-top:22px; display:flex; gap:8px; }
-  .actions button {
-    flex:1; padding:9px; border-radius:8px; border:none; cursor:pointer;
-    font-size:12px; font-weight:600;
-  }
-  .btn-export { background:var(--accent); color:#fff; }
+  .ctl input[type=text] { width:80px; background:#1b1a22; border:1px solid #2a2733;
+    color:#d9d7e0; border-radius:6px; padding:5px 7px; font-family:ui-monospace,monospace; font-size:12px; }
+  .fxhint { font-size:11px; color:#7e7b8c; min-height:16px; margin:10px 0 4px; }
+  .actions { display:flex; gap:8px; margin-top:6px; }
+  .actions button { flex:1; padding:10px; border-radius:8px; border:none; cursor:pointer;
+    font-size:12.5px; font-weight:600; }
+  .btn-save { background:var(--accent); color:#fff; }
   .btn-reset { background:#26242f; color:#d9d7e0; }
 
   /* ---- preview ---- */
-  .preview { flex:1; padding:24px; overflow:auto; display:flex; flex-direction:column; gap:16px; }
-  .vscode {
-    border-radius:12px; overflow:hidden; border:1px solid #2a2733;
-    box-shadow:0 12px 40px rgba(0,0,0,.5); flex-shrink:0;
-    background:var(--editorBg); display:flex; flex-direction:column; min-height:420px;
-  }
-  .vs-tabs { display:flex; background:var(--panelBg); }
-  .vs-tab {
-    padding:9px 18px; font-size:12px; color:#6f6c7d;
-    border-right:1px solid #00000033;
-  }
-  .vs-tab.active { background:var(--editorBg); color:var(--fg); }
+  .preview { flex:1; padding:24px; overflow:auto; }
+  .vscode { border-radius:12px; overflow:hidden; border:1px solid #2a2733;
+    box-shadow:0 14px 44px rgba(0,0,0,.55); background:var(--editorBg);
+    display:flex; flex-direction:column; min-height:440px; }
+  .vs-tabs { display:flex; background:var(--tabsBg); }
+  .vs-tab { padding:9px 16px; font-size:12px; color:var(--comment); cursor:pointer;
+    border-right:1px solid #00000033; white-space:nowrap; }
+  .vs-tab.active { background:var(--editorBg); color:var(--text); }
   .vs-body { display:flex; flex:1; }
-  .vs-activitybar {
-    width:46px; background:var(--panelBg); padding:10px 0;
-    display:flex; flex-direction:column; align-items:center; gap:14px;
-  }
+  .vs-activitybar { width:46px; background:var(--tabsBg); padding:10px 0;
+    display:flex; flex-direction:column; align-items:center; gap:14px; }
   .vs-ai { width:24px; height:24px; border-radius:6px; background:#ffffff14; }
-  .vs-ai.active { background:var(--accent); }
-  .vs-sidebar { width:170px; background:var(--editorBg); padding:12px 8px; border-right:1px solid #ffffff0d; }
-  .vs-side-title { font-size:10px; letter-spacing:1px; color:#6f6c7d; margin-bottom:8px; padding-left:6px; }
-  .vs-file { font-size:12.5px; color:var(--fg); padding:3px 6px; border-radius:5px; }
-  .vs-file.indent { padding-left:20px; }
-  .vs-file.sel { background:var(--accent); color:#fff; }
-  .vs-editor { flex:1; display:flex; font-family:ui-monospace,"Cascadia Code",monospace; font-size:13px; }
-  .vs-gutter {
-    padding:14px 10px 14px 16px; text-align:right; color:var(--lineNumber);
-    user-select:none; line-height:1.65;
-  }
-  .vs-code { padding:14px 16px; line-height:1.65; flex:1; white-space:pre; }
-  .vs-code .ln { display:block; }
-  .vs-code .ln.active { background:var(--lineHighlight); margin:0 -16px; padding:0 16px; }
-  .cm{color:var(--comment);font-style:italic} .st{color:var(--string)}
-  .kw{color:var(--keyword)} .fn{color:var(--function)} .ty{color:var(--type)}
-  .nu{color:var(--number)} .va{color:var(--variable)}
+  .vs-ai.on { background:var(--accent); }
+  .vs-sidebar { width:158px; background:var(--editorBg); padding:12px 8px;
+    border-right:1px solid var(--borders); }
+  .vs-side-title { font-size:10px; letter-spacing:1px; color:var(--comment); margin-bottom:8px; padding-left:6px; }
+  .vs-file { font-size:12.5px; color:var(--text); padding:3px 6px; border-radius:5px; }
+  .vs-file.indent { padding-left:18px; }
+  .vs-file.on { background:var(--accent); color:#fff; }
+  .vs-editor { flex:1; display:flex; font-family:ui-monospace,"Cascadia Code",monospace;
+    font-size:13px; background:var(--editorBg); }
+  .vs-gutter { padding:14px 10px 14px 16px; text-align:right; color:var(--lineNumber);
+    user-select:none; line-height:1.7; white-space:pre; }
+  .vs-code { padding:14px 16px; line-height:1.7; flex:1; white-space:pre; color:var(--text); }
+  .ln { display:block; }
+  .ln.active { background:var(--lineHl); margin:0 -16px; padding:0 16px; }
+  .cm{color:var(--comment);font-style:italic} .st{color:var(--string)} .kw{color:var(--keyword)}
+  .fn{color:var(--function)} .ty{color:var(--type)} .nu{color:var(--number)}
+  .de{color:var(--decorator)} .va{color:var(--text)}
   .sel{ background:var(--selection); border-radius:2px; }
-  .caret { display:inline-block; width:2px; height:1em; background:var(--cursor);
-           vertical-align:text-bottom; }
+  .vs-diag { display:flex; gap:8px; padding:8px 14px; background:var(--tabsBg);
+    font-size:11px; border-top:1px solid #00000033; }
+  .chip { padding:2px 9px; border-radius:20px; color:#fff; }
+  .chip-err{ background:var(--error) } .chip-warn{ background:var(--warning); color:#18171e }
+  .chip-git{ background:var(--gitAdded); color:#18171e }
   .vs-statusbar { background:var(--accent); color:#fff; font-size:11px; padding:4px 14px; }
 
-  .export-box { display:none; }
-  .export-box textarea {
-    width:100%; height:160px; background:#1b1a22; color:#d9d7e0;
-    border:1px solid #2a2733; border-radius:8px; padding:10px;
-    font-family:ui-monospace,monospace; font-size:11px; resize:vertical;
-  }
-  .export-box .copy { margin-top:8px; padding:7px 14px; border:none; border-radius:7px;
-    background:#26242f; color:#d9d7e0; cursor:pointer; font-size:12px; }
-  .hint { font-size:11px; color:#6f6c7d; margin-top:6px; }
+  /* indicador de hover */
+  .fxhi { outline:2px solid #ffffff; outline-offset:1px;
+    box-shadow:0 0 0 4px rgba(255,255,255,.25); border-radius:3px;
+    animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 7px rgba(255,255,255,.12); } }
 </style>
 </head>
 <body>
   <header>
     <div class="dot"></div>
     <h1>Claudy Theme</h1>
-    <span>· editor de colores</span>
+    <span class="sub">· editor de colores</span>
+    <span id="status">Guardado ✓ — recargá VSCode</span>
   </header>
   <div class="app">
     <aside class="controls" id="controls"></aside>
     <main class="preview">
       <div class="vscode">
-        <div class="vs-tabs">
-          <div class="vs-tab active">Counter.tsx</div>
-          <div class="vs-tab">utils.ts</div>
-          <div class="vs-tab">App.tsx</div>
-        </div>
+        <div class="vs-tabs" id="tabs"></div>
         <div class="vs-body">
           <div class="vs-activitybar">
-            <div class="vs-ai active"></div>
-            <div class="vs-ai"></div>
-            <div class="vs-ai"></div>
+            <div class="vs-ai on"></div><div class="vs-ai"></div><div class="vs-ai"></div>
           </div>
           <div class="vs-sidebar">
             <div class="vs-side-title">EXPLORADOR</div>
             <div class="vs-file">src</div>
-            <div class="vs-file indent sel">Counter.tsx</div>
-            <div class="vs-file indent">utils.ts</div>
-            <div class="vs-file">themes</div>
-            <div class="vs-file indent">claudy-dark.json</div>
+            <div class="vs-file indent on">Counter.tsx</div>
+            <div class="vs-file indent">styles.css</div>
+            <div class="vs-file">app.py</div>
           </div>
           <div class="vs-editor">
-            <div class="vs-gutter">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11</div>
-            <pre class="vs-code"><span class="ln"><span class="cm">// Claudy Dark · preview en vivo</span></span><span class="ln"> </span><span class="ln"><span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;</span><span class="ln"> </span><span class="ln"><span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };</span><span class="ln"> </span><span class="ln"><span class="kw">function</span> <span class="fn">Counter</span>({ <span class="va">start</span> = <span class="nu">0</span> }: <span class="ty">Props</span>) {</span><span class="ln active">  <span class="kw">const</span> [<span class="va">count</span>, <span class="va">setCount</span>] = <span class="fn">useState</span>(<span class="sel">start</span>)<span class="caret"></span>;</span><span class="ln">  <span class="cm">// duplica el valor</span></span><span class="ln">  <span class="kw">return</span> <span class="va">count</span> * <span class="nu">2</span>;</span><span class="ln">}</span></pre>
+            <div class="vs-gutter" id="gutter"></div>
+            <pre class="vs-code" id="code"></pre>
           </div>
         </div>
+        <div class="vs-diag">
+          <span class="chip chip-err">3 errores</span>
+          <span class="chip chip-warn">1 alerta</span>
+          <span class="chip chip-git">+12 lineas</span>
+        </div>
         <div class="vs-statusbar">Claudy Dark · UTF-8 · TypeScript</div>
-      </div>
-      <div class="export-box" id="exportBox">
-        <textarea id="exportText" readonly></textarea>
-        <button class="copy" id="copyBtn">Copiar</button>
-        <div class="hint">Pegá esto dentro de las llaves de tu settings.json (aplica en vivo), o pasámelo y lo dejo fijo en el tema.</div>
       </div>
     </main>
   </div>
 
 <script>
 const COLORS = {
-  editorBg:    { label:'Fondo del editor', value:'#18171e', group:'Fondos' },
-  panelBg:     { label:'Fondo de tabs',    value:'#141319', group:'Fondos' },
-  fg:          { label:'Texto',            value:'#bcbec4', group:'Fondos' },
-  selection:   { label:'Selección',        value:'#322f48', group:'Fondos' },
-  lineHighlight:{label:'Línea actual',     value:'#252629', group:'Fondos' },
-  lineNumber:  { label:'Números de línea', value:'#4e5157', group:'Fondos' },
-  cursor:      { label:'Cursor',           value:'#bcbec4', group:'Fondos' },
-  accent:      { label:'Acento (violeta)', value:'#8a6cf0', group:'Acento' },
-  comment:     { label:'Comentarios',      value:'#7a7e85', group:'Sintaxis' },
-  string:      { label:'Strings',          value:'#6aab73', group:'Sintaxis' },
-  keyword:     { label:'Keywords',         value:'#cf8e6d', group:'Sintaxis' },
-  function:    { label:'Funciones',        value:'#5c9ef0', group:'Sintaxis' },
-  type:        { label:'Tipos',            value:'#c77dbb', group:'Sintaxis' },
-  number:      { label:'Números',          value:'#2aacb8', group:'Sintaxis' },
-  variable:    { label:'Variables',        value:'#bcbec4', group:'Sintaxis' },
+  editorBg:  {label:'Fondo del editor', value:'#18171e', group:'Fondos', fx:'.vs-editor,.vs-sidebar'},
+  tabsBg:    {label:'Fondo de tabs',    value:'#141319', group:'Fondos', fx:'.vs-tabs'},
+  text:      {label:'Texto / variables',value:'#bcbec4', group:'Fondos', fx:'.va'},
+  selection: {label:'Selección',        value:'#322f48', group:'Fondos', fx:'.sel'},
+  lineHl:    {label:'Línea actual',     value:'#252629', group:'Fondos', fx:'.ln.active'},
+  lineNumber:{label:'Números de línea', value:'#4e5157', group:'Fondos', fx:'.vs-gutter'},
+  borders:   {label:'Bordes',           value:'#3c3f41', group:'Fondos', fx:'.vs-sidebar'},
+  accent:    {label:'Acento (violeta)', value:'#8a6cf0', group:'Acento', fx:'.vs-statusbar,.vs-ai.on,.vs-file.on'},
+  comment:   {label:'Comentarios',      value:'#7a7e85', group:'Sintaxis', fx:'.cm'},
+  string:    {label:'Strings',          value:'#6aab73', group:'Sintaxis', fx:'.st'},
+  keyword:   {label:'Keywords',         value:'#cf8e6d', group:'Sintaxis', fx:'.kw'},
+  function:  {label:'Funciones',        value:'#5c9ef0', group:'Sintaxis', fx:'.fn'},
+  type:      {label:'Tipos / clases',   value:'#c77dbb', group:'Sintaxis', fx:'.ty'},
+  number:    {label:'Números',          value:'#2aacb8', group:'Sintaxis', fx:'.nu'},
+  decorator: {label:'Decoradores',      value:'#bbb529', group:'Sintaxis', fx:'.de'},
+  error:     {label:'Error',            value:'#f75464', group:'Diagnóstico', fx:'.chip-err'},
+  warning:   {label:'Alerta',           value:'#e8a33e', group:'Diagnóstico', fx:'.chip-warn'},
+  gitAdded:  {label:'Git (agregado)',   value:'#73b00a', group:'Diagnóstico', fx:'.chip-git'},
 };
-const DEFAULTS = Object.fromEntries(Object.entries(COLORS).map(([k,v])=>[k,v.value]));
+const ORIG = Object.fromEntries(Object.entries(COLORS).map(([k,v])=>[k,v.value]));
 
-// mapeo color semántico -> claves reales de VSCode
-const UI_MAP = {
-  editorBg:['editor.background','sideBar.background','activityBar.background','panel.background','statusBar.noFolderBackground','titleBar.activeBackground','tab.activeBackground','terminal.background'],
-  panelBg:['tab.inactiveBackground','editorGroupHeader.tabsBackground'],
-  fg:['editor.foreground','foreground','tab.activeForeground','activityBar.foreground','sideBar.foreground'],
-  accent:['focusBorder','button.background','badge.background','activityBarBadge.background','progressBar.background','textLink.foreground','statusBar.background'],
-  selection:['editor.selectionBackground'],
-  lineHighlight:['editor.lineHighlightBackground'],
-  lineNumber:['editorLineNumber.foreground'],
-  cursor:['editorCursor.foreground'],
+const FILES = {
+  'Counter.tsx': [
+    '<span class="cm">// Claudy Dark · Counter.tsx</span>',
+    '<span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;',
+    '',
+    '<span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };',
+    '',
+    '<span class="kw">export function</span> <span class="fn">Counter</span>({ <span class="va">start</span> = <span class="nu">0</span> }: <span class="ty">Props</span>) {',
+    '  <span class="kw">const</span> [<span class="va">count</span>, <span class="va">setCount</span>] = <span class="fn">useState</span>(<span class="sel">start</span>);',
+    '  <span class="cm">// suma uno al contador</span>',
+    '  <span class="kw">const</span> <span class="fn">inc</span> = () => <span class="fn">setCount</span>(<span class="va">count</span> + <span class="nu">1</span>);',
+    '  <span class="kw">return</span> <span class="va">count</span> * <span class="nu">2</span>;',
+    '}',
+  ],
+  'styles.css': [
+    '<span class="cm">/* Claudy Dark · styles.css */</span>',
+    '<span class="kw">.card</span> {',
+    '  <span class="va">background</span>: <span class="st">#18171e</span>;',
+    '  <span class="va">padding</span>: <span class="nu">16</span><span class="ty">px</span>;',
+    '  <span class="va">border-radius</span>: <span class="nu">12</span><span class="ty">px</span>;',
+    '}',
+    '<span class="kw">.card</span><span class="ty">:hover</span> {',
+    '  <span class="va">transform</span>: <span class="fn">scale</span>(<span class="nu">1.02</span>);',
+    '}',
+  ],
+  'app.py': [
+    '<span class="cm"># Claudy Dark · app.py</span>',
+    '<span class="kw">import</span> <span class="va">os</span>',
+    '',
+    '<span class="de">@app.route</span>(<span class="st">"/"</span>)',
+    '<span class="kw">def</span> <span class="fn">home</span>(<span class="va">req</span>):',
+    '    <span class="va">name</span> = <span class="st">"Claudy"</span>',
+    '    <span class="cm"># devuelve el saludo</span>',
+    '    <span class="kw">return</span> <span class="st">f"hola {name}"</span> <span class="kw">if</span> <span class="va">name</span> <span class="kw">else</span> <span class="nu">404</span>',
+  ],
 };
-const SYNTAX_MAP = { comment:'comments', string:'strings', keyword:'keywords', function:'functions', type:'types', number:'numbers', variable:'variables' };
+const TAB_NAMES = Object.keys(FILES);
+let currentFile = TAB_NAMES[0];
 
 const root = document.documentElement;
 function apply(){ for(const k in COLORS) root.style.setProperty('--'+k, COLORS[k].value); }
 
-function build(){
-  const c = document.getElementById('controls');
-  let lastGroup = '';
+function renderTabs(){
+  const t = document.getElementById('tabs'); t.innerHTML='';
+  TAB_NAMES.forEach(name=>{
+    const el = document.createElement('div');
+    el.className = 'vs-tab' + (name===currentFile?' active':'');
+    el.textContent = name;
+    el.onclick = ()=>{ currentFile=name; renderTabs(); renderCode(); };
+    t.appendChild(el);
+  });
+}
+function renderCode(){
+  const lines = FILES[currentFile];
+  document.getElementById('gutter').textContent = lines.map((_,i)=>i+1).join('\n');
+  document.getElementById('code').innerHTML = lines.map((l,i)=>
+    '<span class="ln'+(i===6&&currentFile==='Counter.tsx'?' active':'')+'">'+(l||' ')+'</span>'
+  ).join('');
+}
+
+function buildControls(){
+  const c = document.getElementById('controls'); c.innerHTML='';
+  let lastG='';
   for(const key in COLORS){
     const col = COLORS[key];
-    if(col.group !== lastGroup){
-      const t = document.createElement('div');
-      t.className = 'group-title'; t.textContent = col.group;
-      c.appendChild(t); lastGroup = col.group;
+    if(col.group!==lastG){
+      const t=document.createElement('div'); t.className='gtitle'; t.textContent=col.group;
+      c.appendChild(t); lastG=col.group;
     }
-    const row = document.createElement('div'); row.className = 'ctl';
-    const lab = document.createElement('label'); lab.textContent = col.label;
-    const pick = document.createElement('input'); pick.type='color'; pick.value=col.value;
-    const hex = document.createElement('input'); hex.type='text'; hex.value=col.value;
-    pick.oninput = ()=>{ col.value=pick.value; hex.value=pick.value; apply(); };
-    hex.oninput = ()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hex.value)){ col.value=hex.value; pick.value=hex.value; apply(); } };
-    row.append(lab, pick, hex); c.appendChild(row);
+    const row=document.createElement('div'); row.className='ctl';
+    const lab=document.createElement('label'); lab.textContent=col.label;
+    const pick=document.createElement('input'); pick.type='color'; pick.value=col.value;
+    const hex=document.createElement('input'); hex.type='text'; hex.value=col.value;
+    const set=v=>{ col.value=v; pick.value=v; hex.value=v; apply(); };
+    pick.oninput=()=>set(pick.value);
+    hex.oninput=()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) set(hex.value.toLowerCase()); };
+    row.onmouseenter=()=>{
+      document.querySelectorAll(col.fx).forEach(e=>e.classList.add('fxhi'));
+      document.getElementById('fxhint').textContent='→ cambia: '+col.label.toLowerCase();
+    };
+    row.onmouseleave=()=>{
+      document.querySelectorAll('.fxhi').forEach(e=>e.classList.remove('fxhi'));
+      document.getElementById('fxhint').textContent='';
+    };
+    row.append(lab,pick,hex); c.appendChild(row);
   }
-  const act = document.createElement('div'); act.className='actions';
-  const exp = document.createElement('button'); exp.className='btn-export'; exp.textContent='Exportar';
-  const rst = document.createElement('button'); rst.className='btn-reset'; rst.textContent='Reset';
-  exp.onclick = doExport;
-  rst.onclick = ()=>{ for(const k in COLORS) COLORS[k].value=DEFAULTS[k]; apply(); build2(); };
-  act.append(exp, rst); c.appendChild(act);
+  const hint=document.createElement('div'); hint.className='fxhint'; hint.id='fxhint';
+  c.appendChild(hint);
+  const act=document.createElement('div'); act.className='actions';
+  const save=document.createElement('button'); save.className='btn-save'; save.textContent='Guardar en el tema';
+  const rst=document.createElement('button'); rst.className='btn-reset'; rst.textContent='Reset';
+  save.onclick=doSave;
+  rst.onclick=()=>{ for(const k in COLORS) COLORS[k].value=ORIG[k]; apply(); buildControls(); };
+  act.append(save,rst); c.appendChild(act);
 }
-function build2(){ document.getElementById('controls').innerHTML=''; build(); }
 
-function doExport(){
-  const ui = {};
-  for(const k in UI_MAP) for(const vsKey of UI_MAP[k]) ui[vsKey] = COLORS[k].value;
-  const syn = {};
-  for(const k in SYNTAX_MAP) syn[SYNTAX_MAP[k]] = COLORS[k].value;
-  const out =
-    '"workbench.colorCustomizations": {\n  "[Claudy Dark]": ' +
-      JSON.stringify(ui, null, 2).replace(/\n/g,'\n  ') + '\n},\n' +
-    '"editor.tokenColorCustomizations": {\n  "[Claudy Dark]": ' +
-      JSON.stringify(syn, null, 2).replace(/\n/g,'\n  ') + '\n}';
-  document.getElementById('exportText').value = out;
-  document.getElementById('exportBox').style.display = 'block';
+async function doSave(){
+  const mapping={};
+  for(const k in COLORS) mapping[ORIG[k]] = COLORS[k].value;
+  const st=document.getElementById('status');
+  try{
+    const r = await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(mapping)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    st.textContent='Guardado ✓ — recargá VSCode'; st.style.color='var(--gitAdded)';
+  }catch(e){
+    st.textContent='Error al guardar: '+e.message+' (¿corriste el server?)';
+    st.style.color='var(--error)';
+  }
+  st.style.opacity=1; setTimeout(()=>st.style.opacity=0,4000);
 }
-document.getElementById('copyBtn').onclick = ()=>{
-  const t = document.getElementById('exportText');
-  t.select(); document.execCommand('copy');
-  document.getElementById('copyBtn').textContent = 'Copiado';
-  setTimeout(()=>document.getElementById('copyBtn').textContent='Copiar', 1500);
-};
 
-build();
-apply();
+buildControls(); renderTabs(); renderCode(); apply();
 </script>
 </body>
 </html>
