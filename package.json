@@ -29,6 +29,21 @@
         "label": "Claudy Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/claudy-dark.json"
+      },
+      {
+        "label": "Claudy Forest",
+        "uiTheme": "vs-dark",
+        "path": "./themes/claudy-forest.json"
+      },
+      {
+        "label": "Claudy Ocean",
+        "uiTheme": "vs-dark",
+        "path": "./themes/claudy-ocean.json"
+      },
+      {
+        "label": "Claudy Minimal",
+        "uiTheme": "vs-dark",
+        "path": "./themes/claudy-minimal.json"
       }
     ]
   }

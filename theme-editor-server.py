@@ -7,6 +7,7 @@ Idempotente: cada guardado parte siempre de la base original.
 
 Uso:  python3 theme-editor-server.py   ->   http://localhost:7333/theme-editor.html
 """
+import glob
 import http.server
 import json
 import os
@@ -22,6 +23,15 @@ BASE = os.path.join(ROOT, "themes", ".claudy-dark.base.json")
 # Snapshot pristino la primera vez.
 if not os.path.exists(BASE):
     shutil.copy(THEME, BASE)
+
+
+def theme_targets():
+    """Archivos de tema a reescribir: el del repo y el instalado en VSCode."""
+    targets = [THEME]
+    pattern = os.path.expanduser(
+        "~/.vscode/extensions/*claudy-dark*/themes/claudy-dark.json")
+    targets.extend(glob.glob(pattern))
+    return targets
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -49,9 +59,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 text,
                 flags=re.IGNORECASE,
             )
-        with open(THEME, "w", encoding="utf-8") as f:
-            f.write(text)
-        body = b'{"ok":true}'
+        written = 0
+        for target in theme_targets():
+            try:
+                with open(target, "w", encoding="utf-8") as f:
+                    f.write(text)
+                written += 1
+            except OSError:
+                pass
+        body = ('{"ok":true,"written":%d}' % written).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))

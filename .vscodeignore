@@ -1,3 +1,8 @@
 .git/**
 .gitignore
 .vscodeignore
+glass/**
+theme-editor.html
+theme-editor-server.py
+themes/.claudy-dark.base.json
+icon.svg
