@@ -20,13 +20,16 @@
   header .dot { width:14px; height:14px; border-radius:5px; background:var(--accent); }
   header h1 { font-size:15px; font-weight:600; }
   header .sub { font-size:12px; color:#7e7b8c; flex:1; }
-  #status { font-size:12px; color:var(--gitAdded); opacity:0; transition:opacity .3s; }
+  #status { font-size:12px; opacity:0; transition:opacity .3s; }
   .app { flex:1; display:flex; min-height:0; }
 
   .controls { width:312px; flex-shrink:0; overflow-y:auto; border-right:1px solid #2a2733; padding:14px; }
+  .themebar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .tpill { padding:6px 11px; border-radius:7px; background:#1b1a22; border:1px solid #2a2733;
+    color:#9b98a8; font-size:12px; cursor:pointer; }
+  .tpill.on { background:var(--accent); color:#fff; border-color:transparent; }
   .gtitle { font-size:11px; text-transform:uppercase; letter-spacing:1px;
     color:#7e7b8c; margin:16px 0 6px; font-weight:700; }
-  .gtitle:first-child { margin-top:0; }
   .ctl { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:7px;
     transition:background .15s; }
   .ctl:hover { background:#1c1b24; }
@@ -77,7 +80,6 @@
   .fn{color:var(--function)} .ty{color:var(--type)} .nu{color:var(--number)}
   .de{color:var(--decorator)} .va{color:var(--text)}
   .sel{ background:var(--selection); border-radius:2px; }
-  /* mapeo de highlight.js a la paleta del tema */
   .hljs-comment,.hljs-quote{color:var(--comment);font-style:italic}
   .hljs-string,.hljs-regexp,.hljs-meta .hljs-string{color:var(--string)}
   .hljs-keyword,.hljs-literal,.hljs-built_in,.hljs-name,.hljs-tag,.hljs-selector-tag,.hljs-symbol,.hljs-bullet{color:var(--keyword)}
@@ -132,7 +134,7 @@
           <span class="chip chip-warn">1 alerta</span>
           <span class="chip chip-git">+12 lineas</span>
         </div>
-        <div class="vs-statusbar">Claudy Dark · UTF-8</div>
+        <div class="vs-statusbar">Claudy · UTF-8</div>
       </div>
     </main>
   </div>
@@ -141,32 +143,43 @@
 
 <script src="vendor/highlight.min.js"></script>
 <script>
-const COLORS = {
-  editorBg:  {label:'Fondo del editor', value:'#18171e', group:'Fondos', fx:'.vs-editor,.vs-sidebar'},
-  tabsBg:    {label:'Fondo de tabs',    value:'#141319', group:'Fondos', fx:'.vs-tabs'},
-  text:      {label:'Texto / variables',value:'#bcbec4', group:'Fondos', fx:'.va,.hljs-variable'},
-  selection: {label:'Selección',        value:'#322f48', group:'Fondos', fx:'.sel'},
-  lineHl:    {label:'Línea actual',     value:'#252629', group:'Fondos', fx:'.ln.active'},
-  lineNumber:{label:'Números de línea', value:'#4e5157', group:'Fondos', fx:'.vs-gutter'},
-  borders:   {label:'Bordes',           value:'#3c3f41', group:'Fondos', fx:'.vs-sidebar'},
-  accent:    {label:'Acento',           value:'#8a6cf0', group:'Acento', fx:'.vs-statusbar,.vs-ai.on,.vs-file.on'},
-  comment:   {label:'Comentarios',      value:'#7a7e85', group:'Sintaxis', fx:'.cm,.hljs-comment'},
-  string:    {label:'Strings',          value:'#6aab73', group:'Sintaxis', fx:'.st,.hljs-string'},
-  keyword:   {label:'Keywords',         value:'#cf8e6d', group:'Sintaxis', fx:'.kw,.hljs-keyword'},
-  function:  {label:'Funciones',        value:'#5c9ef0', group:'Sintaxis', fx:'.fn,.hljs-title'},
-  type:      {label:'Tipos / clases',   value:'#c77dbb', group:'Sintaxis', fx:'.ty,.hljs-attr'},
-  number:    {label:'Números',          value:'#2aacb8', group:'Sintaxis', fx:'.nu,.hljs-number'},
-  decorator: {label:'Decoradores',      value:'#bbb529', group:'Sintaxis', fx:'.de,.hljs-meta'},
-  error:     {label:'Error',            value:'#f75464', group:'Diagnóstico', fx:'.chip-err'},
-  warning:   {label:'Alerta',           value:'#e8a33e', group:'Diagnóstico', fx:'.chip-warn'},
-  gitAdded:  {label:'Git (agregado)',   value:'#73b00a', group:'Diagnóstico', fx:'.chip-git'},
+/* metadata de cada color (label, grupo, que ilumina en hover) */
+const META = {
+  editorBg:  {label:'Fondo del editor', group:'Fondos', fx:'.vs-editor,.vs-sidebar'},
+  tabsBg:    {label:'Fondo de tabs',    group:'Fondos', fx:'.vs-tabs'},
+  text:      {label:'Texto / variables',group:'Fondos', fx:'.va,.hljs-variable'},
+  selection: {label:'Selección',        group:'Fondos', fx:'.sel'},
+  lineHl:    {label:'Línea actual',     group:'Fondos', fx:'.ln.active'},
+  lineNumber:{label:'Números de línea', group:'Fondos', fx:'.vs-gutter'},
+  borders:   {label:'Bordes',           group:'Fondos', fx:'.vs-sidebar'},
+  accent:    {label:'Acento',           group:'Acento', fx:'.vs-statusbar,.vs-ai.on,.vs-file.on'},
+  comment:   {label:'Comentarios',      group:'Sintaxis', fx:'.cm,.hljs-comment'},
+  string:    {label:'Strings',          group:'Sintaxis', fx:'.st,.hljs-string'},
+  keyword:   {label:'Keywords',         group:'Sintaxis', fx:'.kw,.hljs-keyword'},
+  function:  {label:'Funciones',        group:'Sintaxis', fx:'.fn,.hljs-title'},
+  type:      {label:'Tipos / clases',   group:'Sintaxis', fx:'.ty,.hljs-attr'},
+  number:    {label:'Números',          group:'Sintaxis', fx:'.nu,.hljs-number'},
+  decorator: {label:'Decoradores',      group:'Sintaxis', fx:'.de,.hljs-meta'},
+  error:     {label:'Error',            group:'Diagnóstico', fx:'.chip-err'},
+  warning:   {label:'Alerta',           group:'Diagnóstico', fx:'.chip-warn'},
+  gitAdded:  {label:'Git (agregado)',   group:'Diagnóstico', fx:'.chip-git'},
 };
-const ORIG = Object.fromEntries(Object.entries(COLORS).map(([k,v])=>[k,v.value]));
+/* paleta original de cada tema */
+const THEMES = {
+  'claudy-dark':   {label:'Dark',  editorBg:'#18171e',tabsBg:'#141319',text:'#bcbec4',selection:'#322f48',lineHl:'#252629',lineNumber:'#4e5157',borders:'#3c3f41',accent:'#8a6cf0',comment:'#7a7e85',string:'#6aab73',keyword:'#cf8e6d',function:'#5c9ef0',type:'#c77dbb',number:'#2aacb8',decorator:'#bbb529',error:'#f75464',warning:'#e8a33e',gitAdded:'#73b00a'},
+  'claudy-forest': {label:'Forest',editorBg:'#161915',tabsBg:'#121510',text:'#bcbec4',selection:'#2c3a2d',lineHl:'#1f231d',lineNumber:'#4e5157',borders:'#3c3f41',accent:'#5fa86b',comment:'#7a7e85',string:'#6aab73',keyword:'#cf8e6d',function:'#5c9ef0',type:'#c77dbb',number:'#2aacb8',decorator:'#bbb529',error:'#f75464',warning:'#e8a33e',gitAdded:'#73b00a'},
+  'claudy-ocean':  {label:'Ocean', editorBg:'#15171c',tabsBg:'#111318',text:'#bcbec4',selection:'#28384f',lineHl:'#1f2329',lineNumber:'#4e5157',borders:'#3c3f41',accent:'#4a9edb',comment:'#7a7e85',string:'#6aab73',keyword:'#cf8e6d',function:'#5c9ef0',type:'#c77dbb',number:'#2aacb8',decorator:'#bbb529',error:'#f75464',warning:'#e8a33e',gitAdded:'#73b00a'},
+  'claudy-minimal':{label:'Minimal',editorBg:'#18171e',tabsBg:'#141319',text:'#bcbec4',selection:'#2f2f36',lineHl:'#252629',lineNumber:'#4e5157',borders:'#3c3f41',accent:'#8b8f9c',comment:'#7a7e85',string:'#8e9e8b',keyword:'#bba593',function:'#90a0b5',type:'#ad97a8',number:'#83a3a6',decorator:'#a6a487',error:'#f75464',warning:'#e8a33e',gitAdded:'#73b00a'},
+};
+let currentTheme = 'claudy-dark';
+/* STATE[tema] = valores actuales (preserva ediciones al cambiar de tema) */
+const STATE = {};
+for(const t in THEMES){ STATE[t]={}; for(const k in META) STATE[t][k]=THEMES[t][k]; }
+const cur = ()=>STATE[currentTheme];
 
-// archivos de ejemplo (lineas pre-resaltadas). Los tuyos se cargan con "+ archivo".
 const BUILTIN = {
   'Counter.tsx': [
-    '<span class="cm">// Claudy Dark · ejemplo</span>',
+    '<span class="cm">// Claudy · ejemplo</span>',
     '<span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;',
     '',
     '<span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };',
@@ -181,107 +194,109 @@ const BUILTIN = {
 const FILES = {};
 for(const k in BUILTIN) FILES[k] = {builtin:true, lines:BUILTIN[k]};
 let currentFile = Object.keys(FILES)[0];
-
 const EXT_LANG = {ts:'typescript',tsx:'typescript',js:'javascript',jsx:'javascript',
   css:'css',scss:'scss',less:'less',html:'xml',xml:'xml',json:'json',py:'python',
   md:'markdown',go:'go',rs:'rust',java:'java',php:'php',rb:'ruby',sh:'bash',
   yml:'yaml',yaml:'yaml',sql:'sql',c:'c',cpp:'cpp'};
 
 const root = document.documentElement;
-function apply(){ for(const k in COLORS) root.style.setProperty('--'+k, COLORS[k].value); }
+function apply(){ for(const k in META) root.style.setProperty('--'+k, cur()[k]); }
 
-/* ---- persistencia de los archivos cargados ---- */
+/* ---- archivos cargados (persisten en el navegador) ---- */
 function saveFiles(){
-  const ld = {};
-  for(const k in FILES) if(!FILES[k].builtin) ld[k] = FILES[k];
+  const ld={}; for(const k in FILES) if(!FILES[k].builtin) ld[k]=FILES[k];
   localStorage.setItem('claudyFiles', JSON.stringify(ld));
 }
 function restoreFiles(){
-  try {
-    const ld = JSON.parse(localStorage.getItem('claudyFiles') || '{}');
-    for(const k in ld) FILES[k] = ld[k];
-  } catch(e){}
+  try { const ld=JSON.parse(localStorage.getItem('claudyFiles')||'{}');
+    for(const k in ld) FILES[k]=ld[k]; } catch(e){}
 }
 
 /* ---- preview ---- */
 function renderTabs(){
-  const t = document.getElementById('tabs'); t.innerHTML='';
+  const t=document.getElementById('tabs'); t.innerHTML='';
   Object.keys(FILES).forEach(name=>{
-    const el = document.createElement('div');
-    el.className = 'vs-tab'+(name===currentFile?' active':'');
-    const lbl = document.createElement('span'); lbl.textContent = name;
-    lbl.onclick = ()=>{ currentFile=name; renderTabs(); renderCode(); };
+    const el=document.createElement('div');
+    el.className='vs-tab'+(name===currentFile?' active':'');
+    const lbl=document.createElement('span'); lbl.textContent=name;
+    lbl.onclick=()=>{ currentFile=name; renderTabs(); renderCode(); };
     el.appendChild(lbl);
     if(!FILES[name].builtin){
-      const x = document.createElement('span'); x.className='x'; x.textContent='×';
-      x.onclick = e=>{ e.stopPropagation(); delete FILES[name]; saveFiles();
+      const x=document.createElement('span'); x.className='x'; x.textContent='×';
+      x.onclick=e=>{ e.stopPropagation(); delete FILES[name]; saveFiles();
         if(currentFile===name) currentFile=Object.keys(FILES)[0];
         renderTabs(); renderCode(); };
       el.appendChild(x);
     }
     t.appendChild(el);
   });
-  const add = document.createElement('div');
+  const add=document.createElement('div');
   add.className='vs-tab vs-tab-add'; add.textContent='+ archivo';
-  add.onclick = ()=>document.getElementById('fileInput').click();
+  add.onclick=()=>document.getElementById('fileInput').click();
   t.appendChild(add);
 }
 function renderCode(){
-  const g = document.getElementById('gutter'), c = document.getElementById('code');
-  const f = FILES[currentFile];
+  const g=document.getElementById('gutter'), c=document.getElementById('code');
+  const f=FILES[currentFile];
   if(!f){ g.textContent=''; c.innerHTML=''; return; }
   if(f.builtin){
-    g.textContent = f.lines.map((_,i)=>i+1).join('\n');
-    c.innerHTML = f.lines.map((l,i)=>
-      '<span class="ln'+(i===6?' active':'')+'">'+(l||' ')+'</span>').join('');
+    g.textContent=f.lines.map((_,i)=>i+1).join('\n');
+    c.innerHTML=f.lines.map((l,i)=>'<span class="ln'+(i===6?' active':'')+'">'+(l||' ')+'</span>').join('');
   } else {
-    g.textContent = Array.from({length:f.n},(_,i)=>i+1).join('\n');
-    c.innerHTML = f.html;
+    g.textContent=Array.from({length:f.n},(_,i)=>i+1).join('\n');
+    c.innerHTML=f.html;
   }
 }
-
 function loadFile(file){
-  const r = new FileReader();
-  r.onload = ()=>{
-    let text = String(r.result).replace(/\t/g,'  ');
-    const lines = text.split('\n');
-    if(lines.length > 240) text = lines.slice(0,240).join('\n') + '\n...';
-    const lang = EXT_LANG[(file.name.split('.').pop()||'').toLowerCase()];
+  const r=new FileReader();
+  r.onload=()=>{
+    let text=String(r.result).replace(/\t/g,'  ');
+    const lines=text.split('\n');
+    if(lines.length>240) text=lines.slice(0,240).join('\n')+'\n...';
+    const lang=EXT_LANG[(file.name.split('.').pop()||'').toLowerCase()];
     let html;
-    try { html = lang ? hljs.highlight(text,{language:lang}).value
-                       : hljs.highlightAuto(text).value; }
-    catch(e){ html = hljs.highlightAuto(text).value; }
-    FILES[file.name] = { html, n:(text.match(/\n/g)||[]).length+1 };
-    currentFile = file.name;
-    saveFiles(); renderTabs(); renderCode();
+    try { html=lang?hljs.highlight(text,{language:lang}).value:hljs.highlightAuto(text).value; }
+    catch(e){ html=hljs.highlightAuto(text).value; }
+    FILES[file.name]={ html, n:(text.match(/\n/g)||[]).length+1 };
+    currentFile=file.name; saveFiles(); renderTabs(); renderCode();
   };
   r.readAsText(file);
 }
-document.getElementById('fileInput').onchange = e=>{
-  if(e.target.files[0]) loadFile(e.target.files[0]);
-  e.target.value='';
+document.getElementById('fileInput').onchange=e=>{
+  if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value='';
 };
 
 /* ---- controles ---- */
 function buildControls(){
-  const c = document.getElementById('controls'); c.innerHTML='';
+  const c=document.getElementById('controls'); c.innerHTML='';
+  // selector de tema
+  const bar=document.createElement('div'); bar.className='themebar';
+  for(const t in THEMES){
+    const p=document.createElement('div');
+    p.className='tpill'+(t===currentTheme?' on':'');
+    p.textContent=THEMES[t].label;
+    p.onclick=()=>{ currentTheme=t; apply(); buildControls(); };
+    bar.appendChild(p);
+  }
+  c.appendChild(bar);
+  // colores
   let lastG='';
-  for(const key in COLORS){
-    const col = COLORS[key];
-    if(col.group!==lastG){
-      const t=document.createElement('div'); t.className='gtitle'; t.textContent=col.group;
-      c.appendChild(t); lastG=col.group;
+  for(const key in META){
+    const m=META[key];
+    if(m.group!==lastG){
+      const t=document.createElement('div'); t.className='gtitle'; t.textContent=m.group;
+      c.appendChild(t); lastG=m.group;
     }
     const row=document.createElement('div'); row.className='ctl';
-    const lab=document.createElement('label'); lab.textContent=col.label;
-    const pick=document.createElement('input'); pick.type='color'; pick.value=col.value;
-    const hex=document.createElement('input'); hex.type='text'; hex.value=col.value;
-    const set=v=>{ col.value=v; pick.value=v; hex.value=v; apply(); };
+    const lab=document.createElement('label'); lab.textContent=m.label;
+    const pick=document.createElement('input'); pick.type='color'; pick.value=cur()[key];
+    const hex=document.createElement('input'); hex.type='text'; hex.value=cur()[key];
+    const set=v=>{ cur()[key]=v; pick.value=v; hex.value=v; apply(); };
     pick.oninput=()=>set(pick.value);
     hex.oninput=()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) set(hex.value.toLowerCase()); };
     row.onmouseenter=()=>{
-      document.querySelectorAll(col.fx).forEach(e=>e.classList.add('fxhi'));
-      document.getElementById('fxhint').textContent='→ cambia: '+col.label.toLowerCase();
+      document.querySelectorAll(m.fx).forEach(e=>e.classList.add('fxhi'));
+      document.getElementById('fxhint').textContent='→ cambia: '+m.label.toLowerCase();
     };
     row.onmouseleave=()=>{
       document.querySelectorAll('.fxhi').forEach(e=>e.classList.remove('fxhi'));
@@ -292,22 +307,24 @@ function buildControls(){
   const hint=document.createElement('div'); hint.className='fxhint'; hint.id='fxhint';
   c.appendChild(hint);
   const act=document.createElement('div'); act.className='actions';
-  const save=document.createElement('button'); save.className='btn-save'; save.textContent='Guardar en el tema';
+  const save=document.createElement('button'); save.className='btn-save';
+  save.textContent='Guardar '+THEMES[currentTheme].label;
   const rst=document.createElement('button'); rst.className='btn-reset'; rst.textContent='Reset';
   save.onclick=doSave;
-  rst.onclick=()=>{ for(const k in COLORS) COLORS[k].value=ORIG[k]; apply(); buildControls(); };
+  rst.onclick=()=>{ for(const k in META) cur()[k]=THEMES[currentTheme][k]; apply(); buildControls(); };
   act.append(save,rst); c.appendChild(act);
 }
 
 async function doSave(){
   const mapping={};
-  for(const k in COLORS) mapping[ORIG[k]] = COLORS[k].value;
+  for(const k in META) mapping[THEMES[currentTheme][k]] = cur()[k];
   const st=document.getElementById('status');
   try{
-    const res = await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(mapping)});
+    const res=await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({theme:currentTheme, mapping})});
     if(!res.ok) throw new Error('HTTP '+res.status);
-    st.textContent='Guardado ✓ — recargá VSCode'; st.style.color='var(--gitAdded)';
+    st.textContent='Guardado '+THEMES[currentTheme].label+' ✓ — recargá VSCode';
+    st.style.color='var(--gitAdded)';
   }catch(e){
     st.textContent='Error al guardar: '+e.message+' (¿corre el server?)';
     st.style.color='var(--error)';
@@ -316,7 +333,7 @@ async function doSave(){
 }
 
 restoreFiles();
-if(!FILES[currentFile]) currentFile = Object.keys(FILES)[0];
+if(!FILES[currentFile]) currentFile=Object.keys(FILES)[0];
 buildControls(); renderTabs(); renderCode(); apply();
 </script>
 </body>

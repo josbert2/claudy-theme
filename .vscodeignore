@@ -5,5 +5,5 @@ glass/**
 vendor/**
 theme-editor.html
 theme-editor-server.py
-themes/.claudy-dark.base.json
+themes/.*.base.json
 icon.svg

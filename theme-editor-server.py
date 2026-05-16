@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Servidor local del editor de colores de Claudy Theme.
 
-Sirve theme-editor.html y, en POST /save, reescribe themes/claudy-dark.json
-aplicando el mapeo de colores recibido sobre una copia pristina del tema.
-Idempotente: cada guardado parte siempre de la base original.
+Sirve theme-editor.html y, en POST /save, reescribe el tema elegido aplicando
+el mapeo de colores sobre una copia pristina. Soporta los 4 temas.
+Idempotente: cada guardado parte siempre de la base original del tema.
 
 Uso:  python3 theme-editor-server.py   ->   http://localhost:7333/theme-editor.html
 """
@@ -17,19 +17,22 @@ import socketserver
 
 PORT = 7333
 ROOT = os.path.dirname(os.path.abspath(__file__))
-THEME = os.path.join(ROOT, "themes", "claudy-dark.json")
-BASE = os.path.join(ROOT, "themes", ".claudy-dark.base.json")
+THEMES_DIR = os.path.join(ROOT, "themes")
+THEMES = ["claudy-dark", "claudy-forest", "claudy-ocean", "claudy-minimal"]
 
-# Snapshot pristino la primera vez.
-if not os.path.exists(BASE):
-    shutil.copy(THEME, BASE)
+# Snapshot pristino por tema (la primera vez).
+for _t in THEMES:
+    _src = os.path.join(THEMES_DIR, _t + ".json")
+    _base = os.path.join(THEMES_DIR, "." + _t + ".base.json")
+    if os.path.exists(_src) and not os.path.exists(_base):
+        shutil.copy(_src, _base)
 
 
-def theme_targets():
-    """Archivos de tema a reescribir: el del repo y el instalado en VSCode."""
-    targets = [THEME]
+def theme_targets(theme):
+    """Archivos a reescribir para un tema: el del repo y la copia instalada."""
+    targets = [os.path.join(THEMES_DIR, theme + ".json")]
     pattern = os.path.expanduser(
-        "~/.vscode/extensions/*claudy-dark*/themes/claudy-dark.json")
+        "~/.vscode/extensions/*claudy-dark*/themes/" + theme + ".json")
     targets.extend(glob.glob(pattern))
     return targets
 
@@ -44,13 +47,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         length = int(self.headers.get("Content-Length", 0))
         try:
-            mapping = json.loads(self.rfile.read(length) or b"{}")
+            data = json.loads(self.rfile.read(length) or b"{}")
         except json.JSONDecodeError:
             self.send_error(400)
             return
-        # normalizar a minuscula
-        mapping = {k.lower(): v.lower() for k, v in mapping.items()}
-        text = open(BASE, encoding="utf-8").read()
+        theme = data.get("theme", "claudy-dark")
+        if theme not in THEMES:           # whitelist: evita path traversal
+            self.send_error(400, "tema desconocido")
+            return
+        mapping = {k.lower(): v.lower() for k, v in data.get("mapping", {}).items()}
+        base = os.path.join(THEMES_DIR, "." + theme + ".base.json")
+        text = open(base, encoding="utf-8").read()
         if mapping:
             pattern = "(" + "|".join(re.escape(k) for k in mapping) + ")"
             text = re.sub(
@@ -60,14 +67,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 flags=re.IGNORECASE,
             )
         written = 0
-        for target in theme_targets():
+        for target in theme_targets(theme):
             try:
                 with open(target, "w", encoding="utf-8") as f:
                     f.write(text)
                 written += 1
             except OSError:
                 pass
-        body = ('{"ok":true,"written":%d}' % written).encode()
+        body = ('{"ok":true,"theme":"%s","written":%d}' % (theme, written)).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -75,7 +82,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, *args):
-        pass  # silencioso
+        pass
 
 
 if __name__ == "__main__":
