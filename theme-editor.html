@@ -23,13 +23,12 @@
   #status { font-size:12px; color:var(--gitAdded); opacity:0; transition:opacity .3s; }
   .app { flex:1; display:flex; min-height:0; }
 
-  /* ---- controles ---- */
   .controls { width:312px; flex-shrink:0; overflow-y:auto; border-right:1px solid #2a2733; padding:14px; }
   .gtitle { font-size:11px; text-transform:uppercase; letter-spacing:1px;
     color:#7e7b8c; margin:16px 0 6px; font-weight:700; }
   .gtitle:first-child { margin-top:0; }
   .ctl { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:7px;
-    cursor:default; transition:background .15s; }
+    transition:background .15s; }
   .ctl:hover { background:#1c1b24; }
   .ctl label { flex:1; font-size:13px; }
   .ctl input[type=color] { width:30px; height:30px; border:none; border-radius:8px;
@@ -44,15 +43,17 @@
   .btn-save { background:var(--accent); color:#fff; }
   .btn-reset { background:#26242f; color:#d9d7e0; }
 
-  /* ---- preview ---- */
   .preview { flex:1; padding:24px; overflow:auto; }
   .vscode { border-radius:12px; overflow:hidden; border:1px solid #2a2733;
     box-shadow:0 14px 44px rgba(0,0,0,.55); background:var(--editorBg);
     display:flex; flex-direction:column; min-height:440px; }
-  .vs-tabs { display:flex; background:var(--tabsBg); }
-  .vs-tab { padding:9px 16px; font-size:12px; color:var(--comment); cursor:pointer;
-    border-right:1px solid #00000033; white-space:nowrap; }
+  .vs-tabs { display:flex; background:var(--tabsBg); overflow-x:auto; }
+  .vs-tab { padding:9px 14px; font-size:12px; color:var(--comment); cursor:pointer;
+    border-right:1px solid #00000033; white-space:nowrap; display:flex; gap:7px; align-items:center; }
   .vs-tab.active { background:var(--editorBg); color:var(--text); }
+  .vs-tab .x { opacity:.5; font-weight:700; }
+  .vs-tab .x:hover { opacity:1; }
+  .vs-tab-add { color:var(--accent); font-weight:600; }
   .vs-body { display:flex; flex:1; }
   .vs-activitybar { width:46px; background:var(--tabsBg); padding:10px 0;
     display:flex; flex-direction:column; align-items:center; gap:14px; }
@@ -68,24 +69,33 @@
     font-size:13px; background:var(--editorBg); }
   .vs-gutter { padding:14px 10px 14px 16px; text-align:right; color:var(--lineNumber);
     user-select:none; line-height:1.7; white-space:pre; }
-  .vs-code { padding:14px 16px; line-height:1.7; flex:1; white-space:pre; color:var(--text); }
+  .vs-code { padding:14px 16px; line-height:1.7; flex:1; white-space:pre; color:var(--text);
+    overflow-x:auto; }
   .ln { display:block; }
   .ln.active { background:var(--lineHl); margin:0 -16px; padding:0 16px; }
   .cm{color:var(--comment);font-style:italic} .st{color:var(--string)} .kw{color:var(--keyword)}
   .fn{color:var(--function)} .ty{color:var(--type)} .nu{color:var(--number)}
   .de{color:var(--decorator)} .va{color:var(--text)}
   .sel{ background:var(--selection); border-radius:2px; }
+  /* mapeo de highlight.js a la paleta del tema */
+  .hljs-comment,.hljs-quote{color:var(--comment);font-style:italic}
+  .hljs-string,.hljs-regexp,.hljs-meta .hljs-string{color:var(--string)}
+  .hljs-keyword,.hljs-literal,.hljs-built_in,.hljs-name,.hljs-tag,.hljs-selector-tag,.hljs-symbol,.hljs-bullet{color:var(--keyword)}
+  .hljs-title,.hljs-title.function_,.hljs-section{color:var(--function)}
+  .hljs-title.class_,.hljs-type,.hljs-class .hljs-title{color:var(--type)}
+  .hljs-attr,.hljs-attribute,.hljs-property,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:var(--type)}
+  .hljs-number{color:var(--number)}
+  .hljs-variable,.hljs-template-variable,.hljs-params{color:var(--text)}
+  .hljs-meta,.hljs-doctag{color:var(--decorator)}
+  .hljs-deletion{color:var(--error)} .hljs-addition{color:var(--gitAdded)}
   .vs-diag { display:flex; gap:8px; padding:8px 14px; background:var(--tabsBg);
     font-size:11px; border-top:1px solid #00000033; }
   .chip { padding:2px 9px; border-radius:20px; color:#fff; }
   .chip-err{ background:var(--error) } .chip-warn{ background:var(--warning); color:#18171e }
   .chip-git{ background:var(--gitAdded); color:#18171e }
   .vs-statusbar { background:var(--accent); color:#fff; font-size:11px; padding:4px 14px; }
-
-  /* indicador de hover */
-  .fxhi { outline:2px solid #ffffff; outline-offset:1px;
-    box-shadow:0 0 0 4px rgba(255,255,255,.25); border-radius:3px;
-    animation:pulse 1s ease-in-out infinite; }
+  .fxhi { outline:2px solid #fff; outline-offset:1px; box-shadow:0 0 0 4px rgba(255,255,255,.25);
+    border-radius:3px; animation:pulse 1s ease-in-out infinite; }
   @keyframes pulse { 50% { box-shadow:0 0 0 7px rgba(255,255,255,.12); } }
 </style>
 </head>
@@ -94,7 +104,7 @@
     <div class="dot"></div>
     <h1>Claudy Theme</h1>
     <span class="sub">· editor de colores</span>
-    <span id="status">Guardado ✓ — recargá VSCode</span>
+    <span id="status"></span>
   </header>
   <div class="app">
     <aside class="controls" id="controls"></aside>
@@ -108,9 +118,9 @@
           <div class="vs-sidebar">
             <div class="vs-side-title">EXPLORADOR</div>
             <div class="vs-file">src</div>
-            <div class="vs-file indent on">Counter.tsx</div>
-            <div class="vs-file indent">styles.css</div>
-            <div class="vs-file">app.py</div>
+            <div class="vs-file indent on">archivo</div>
+            <div class="vs-file indent">otro</div>
+            <div class="vs-file">themes</div>
           </div>
           <div class="vs-editor">
             <div class="vs-gutter" id="gutter"></div>
@@ -122,94 +132,137 @@
           <span class="chip chip-warn">1 alerta</span>
           <span class="chip chip-git">+12 lineas</span>
         </div>
-        <div class="vs-statusbar">Claudy Dark · UTF-8 · TypeScript</div>
+        <div class="vs-statusbar">Claudy Dark · UTF-8</div>
       </div>
     </main>
   </div>
+  <input type="file" id="fileInput" style="display:none"
+    accept=".ts,.tsx,.js,.jsx,.css,.scss,.less,.html,.xml,.json,.py,.md,.go,.rs,.java,.php,.rb,.sh,.yml,.yaml,.sql,.c,.cpp,.txt">
 
+<script src="vendor/highlight.min.js"></script>
 <script>
 const COLORS = {
   editorBg:  {label:'Fondo del editor', value:'#18171e', group:'Fondos', fx:'.vs-editor,.vs-sidebar'},
   tabsBg:    {label:'Fondo de tabs',    value:'#141319', group:'Fondos', fx:'.vs-tabs'},
-  text:      {label:'Texto / variables',value:'#bcbec4', group:'Fondos', fx:'.va'},
+  text:      {label:'Texto / variables',value:'#bcbec4', group:'Fondos', fx:'.va,.hljs-variable'},
   selection: {label:'Selección',        value:'#322f48', group:'Fondos', fx:'.sel'},
   lineHl:    {label:'Línea actual',     value:'#252629', group:'Fondos', fx:'.ln.active'},
   lineNumber:{label:'Números de línea', value:'#4e5157', group:'Fondos', fx:'.vs-gutter'},
   borders:   {label:'Bordes',           value:'#3c3f41', group:'Fondos', fx:'.vs-sidebar'},
-  accent:    {label:'Acento (violeta)', value:'#8a6cf0', group:'Acento', fx:'.vs-statusbar,.vs-ai.on,.vs-file.on'},
-  comment:   {label:'Comentarios',      value:'#7a7e85', group:'Sintaxis', fx:'.cm'},
-  string:    {label:'Strings',          value:'#6aab73', group:'Sintaxis', fx:'.st'},
-  keyword:   {label:'Keywords',         value:'#cf8e6d', group:'Sintaxis', fx:'.kw'},
-  function:  {label:'Funciones',        value:'#5c9ef0', group:'Sintaxis', fx:'.fn'},
-  type:      {label:'Tipos / clases',   value:'#c77dbb', group:'Sintaxis', fx:'.ty'},
-  number:    {label:'Números',          value:'#2aacb8', group:'Sintaxis', fx:'.nu'},
-  decorator: {label:'Decoradores',      value:'#bbb529', group:'Sintaxis', fx:'.de'},
+  accent:    {label:'Acento',           value:'#8a6cf0', group:'Acento', fx:'.vs-statusbar,.vs-ai.on,.vs-file.on'},
+  comment:   {label:'Comentarios',      value:'#7a7e85', group:'Sintaxis', fx:'.cm,.hljs-comment'},
+  string:    {label:'Strings',          value:'#6aab73', group:'Sintaxis', fx:'.st,.hljs-string'},
+  keyword:   {label:'Keywords',         value:'#cf8e6d', group:'Sintaxis', fx:'.kw,.hljs-keyword'},
+  function:  {label:'Funciones',        value:'#5c9ef0', group:'Sintaxis', fx:'.fn,.hljs-title'},
+  type:      {label:'Tipos / clases',   value:'#c77dbb', group:'Sintaxis', fx:'.ty,.hljs-attr'},
+  number:    {label:'Números',          value:'#2aacb8', group:'Sintaxis', fx:'.nu,.hljs-number'},
+  decorator: {label:'Decoradores',      value:'#bbb529', group:'Sintaxis', fx:'.de,.hljs-meta'},
   error:     {label:'Error',            value:'#f75464', group:'Diagnóstico', fx:'.chip-err'},
   warning:   {label:'Alerta',           value:'#e8a33e', group:'Diagnóstico', fx:'.chip-warn'},
   gitAdded:  {label:'Git (agregado)',   value:'#73b00a', group:'Diagnóstico', fx:'.chip-git'},
 };
 const ORIG = Object.fromEntries(Object.entries(COLORS).map(([k,v])=>[k,v.value]));
 
-const FILES = {
+// archivos de ejemplo (lineas pre-resaltadas). Los tuyos se cargan con "+ archivo".
+const BUILTIN = {
   'Counter.tsx': [
-    '<span class="cm">// Claudy Dark · Counter.tsx</span>',
+    '<span class="cm">// Claudy Dark · ejemplo</span>',
     '<span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;',
     '',
     '<span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };',
     '',
     '<span class="kw">export function</span> <span class="fn">Counter</span>({ <span class="va">start</span> = <span class="nu">0</span> }: <span class="ty">Props</span>) {',
     '  <span class="kw">const</span> [<span class="va">count</span>, <span class="va">setCount</span>] = <span class="fn">useState</span>(<span class="sel">start</span>);',
-    '  <span class="cm">// suma uno al contador</span>',
-    '  <span class="kw">const</span> <span class="fn">inc</span> = () => <span class="fn">setCount</span>(<span class="va">count</span> + <span class="nu">1</span>);',
+    '  <span class="cm">// suma uno</span>',
     '  <span class="kw">return</span> <span class="va">count</span> * <span class="nu">2</span>;',
     '}',
   ],
-  'styles.css': [
-    '<span class="cm">/* Claudy Dark · styles.css */</span>',
-    '<span class="kw">.card</span> {',
-    '  <span class="va">background</span>: <span class="st">#18171e</span>;',
-    '  <span class="va">padding</span>: <span class="nu">16</span><span class="ty">px</span>;',
-    '  <span class="va">border-radius</span>: <span class="nu">12</span><span class="ty">px</span>;',
-    '}',
-    '<span class="kw">.card</span><span class="ty">:hover</span> {',
-    '  <span class="va">transform</span>: <span class="fn">scale</span>(<span class="nu">1.02</span>);',
-    '}',
-  ],
-  'app.py': [
-    '<span class="cm"># Claudy Dark · app.py</span>',
-    '<span class="kw">import</span> <span class="va">os</span>',
-    '',
-    '<span class="de">@app.route</span>(<span class="st">"/"</span>)',
-    '<span class="kw">def</span> <span class="fn">home</span>(<span class="va">req</span>):',
-    '    <span class="va">name</span> = <span class="st">"Claudy"</span>',
-    '    <span class="cm"># devuelve el saludo</span>',
-    '    <span class="kw">return</span> <span class="st">f"hola {name}"</span> <span class="kw">if</span> <span class="va">name</span> <span class="kw">else</span> <span class="nu">404</span>',
-  ],
 };
-const TAB_NAMES = Object.keys(FILES);
-let currentFile = TAB_NAMES[0];
+const FILES = {};
+for(const k in BUILTIN) FILES[k] = {builtin:true, lines:BUILTIN[k]};
+let currentFile = Object.keys(FILES)[0];
+
+const EXT_LANG = {ts:'typescript',tsx:'typescript',js:'javascript',jsx:'javascript',
+  css:'css',scss:'scss',less:'less',html:'xml',xml:'xml',json:'json',py:'python',
+  md:'markdown',go:'go',rs:'rust',java:'java',php:'php',rb:'ruby',sh:'bash',
+  yml:'yaml',yaml:'yaml',sql:'sql',c:'c',cpp:'cpp'};
 
 const root = document.documentElement;
 function apply(){ for(const k in COLORS) root.style.setProperty('--'+k, COLORS[k].value); }
 
-function renderTabs(){
-  const t = document.getElementById('tabs'); t.innerHTML='';
-  TAB_NAMES.forEach(name=>{
-    const el = document.createElement('div');
-    el.className = 'vs-tab' + (name===currentFile?' active':'');
-    el.textContent = name;
-    el.onclick = ()=>{ currentFile=name; renderTabs(); renderCode(); };
-    t.appendChild(el);
-  });
+/* ---- persistencia de los archivos cargados ---- */
+function saveFiles(){
+  const ld = {};
+  for(const k in FILES) if(!FILES[k].builtin) ld[k] = FILES[k];
+  localStorage.setItem('claudyFiles', JSON.stringify(ld));
 }
-function renderCode(){
-  const lines = FILES[currentFile];
-  document.getElementById('gutter').textContent = lines.map((_,i)=>i+1).join('\n');
-  document.getElementById('code').innerHTML = lines.map((l,i)=>
-    '<span class="ln'+(i===6&&currentFile==='Counter.tsx'?' active':'')+'">'+(l||' ')+'</span>'
-  ).join('');
+function restoreFiles(){
+  try {
+    const ld = JSON.parse(localStorage.getItem('claudyFiles') || '{}');
+    for(const k in ld) FILES[k] = ld[k];
+  } catch(e){}
 }
 
+/* ---- preview ---- */
+function renderTabs(){
+  const t = document.getElementById('tabs'); t.innerHTML='';
+  Object.keys(FILES).forEach(name=>{
+    const el = document.createElement('div');
+    el.className = 'vs-tab'+(name===currentFile?' active':'');
+    const lbl = document.createElement('span'); lbl.textContent = name;
+    lbl.onclick = ()=>{ currentFile=name; renderTabs(); renderCode(); };
+    el.appendChild(lbl);
+    if(!FILES[name].builtin){
+      const x = document.createElement('span'); x.className='x'; x.textContent='×';
+      x.onclick = e=>{ e.stopPropagation(); delete FILES[name]; saveFiles();
+        if(currentFile===name) currentFile=Object.keys(FILES)[0];
+        renderTabs(); renderCode(); };
+      el.appendChild(x);
+    }
+    t.appendChild(el);
+  });
+  const add = document.createElement('div');
+  add.className='vs-tab vs-tab-add'; add.textContent='+ archivo';
+  add.onclick = ()=>document.getElementById('fileInput').click();
+  t.appendChild(add);
+}
+function renderCode(){
+  const g = document.getElementById('gutter'), c = document.getElementById('code');
+  const f = FILES[currentFile];
+  if(!f){ g.textContent=''; c.innerHTML=''; return; }
+  if(f.builtin){
+    g.textContent = f.lines.map((_,i)=>i+1).join('\n');
+    c.innerHTML = f.lines.map((l,i)=>
+      '<span class="ln'+(i===6?' active':'')+'">'+(l||' ')+'</span>').join('');
+  } else {
+    g.textContent = Array.from({length:f.n},(_,i)=>i+1).join('\n');
+    c.innerHTML = f.html;
+  }
+}
+
+function loadFile(file){
+  const r = new FileReader();
+  r.onload = ()=>{
+    let text = String(r.result).replace(/\t/g,'  ');
+    const lines = text.split('\n');
+    if(lines.length > 240) text = lines.slice(0,240).join('\n') + '\n...';
+    const lang = EXT_LANG[(file.name.split('.').pop()||'').toLowerCase()];
+    let html;
+    try { html = lang ? hljs.highlight(text,{language:lang}).value
+                       : hljs.highlightAuto(text).value; }
+    catch(e){ html = hljs.highlightAuto(text).value; }
+    FILES[file.name] = { html, n:(text.match(/\n/g)||[]).length+1 };
+    currentFile = file.name;
+    saveFiles(); renderTabs(); renderCode();
+  };
+  r.readAsText(file);
+}
+document.getElementById('fileInput').onchange = e=>{
+  if(e.target.files[0]) loadFile(e.target.files[0]);
+  e.target.value='';
+};
+
+/* ---- controles ---- */
 function buildControls(){
   const c = document.getElementById('controls'); c.innerHTML='';
   let lastG='';
@@ -251,17 +304,19 @@ async function doSave(){
   for(const k in COLORS) mapping[ORIG[k]] = COLORS[k].value;
   const st=document.getElementById('status');
   try{
-    const r = await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},
+    const res = await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(mapping)});
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(!res.ok) throw new Error('HTTP '+res.status);
     st.textContent='Guardado ✓ — recargá VSCode'; st.style.color='var(--gitAdded)';
   }catch(e){
-    st.textContent='Error al guardar: '+e.message+' (¿corriste el server?)';
+    st.textContent='Error al guardar: '+e.message+' (¿corre el server?)';
     st.style.color='var(--error)';
   }
   st.style.opacity=1; setTimeout(()=>st.style.opacity=0,4000);
 }
 
+restoreFiles();
+if(!FILES[currentFile]) currentFile = Object.keys(FILES)[0];
 buildControls(); renderTabs(); renderCode(); apply();
 </script>
 </body>
