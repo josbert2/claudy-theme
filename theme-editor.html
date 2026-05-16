@@ -178,21 +178,108 @@ for(const t in THEMES){ STATE[t]={}; for(const k in META) STATE[t][k]=THEMES[t][
 const cur = ()=>STATE[currentTheme];
 
 const BUILTIN = {
-  'Counter.tsx': [
-    '<span class="cm">// Claudy · ejemplo</span>',
-    '<span class="kw">import</span> { <span class="fn">useState</span> } <span class="kw">from</span> <span class="st">"react"</span>;',
-    '',
-    '<span class="kw">type</span> <span class="ty">Props</span> = { <span class="va">start</span>: <span class="ty">number</span> };',
-    '',
-    '<span class="kw">export function</span> <span class="fn">Counter</span>({ <span class="va">start</span> = <span class="nu">0</span> }: <span class="ty">Props</span>) {',
-    '  <span class="kw">const</span> [<span class="va">count</span>, <span class="va">setCount</span>] = <span class="fn">useState</span>(<span class="sel">start</span>);',
-    '  <span class="cm">// suma uno</span>',
-    '  <span class="kw">return</span> <span class="va">count</span> * <span class="nu">2</span>;',
-    '}',
-  ],
+  'Counter.tsx': { lang:'typescript', code:
+`import { useState, useEffect } from "react";
+
+type Props = { start?: number; step?: number };
+
+// contador con efecto secundario
+export function Counter({ start = 0, step = 1 }: Props) {
+  const [count, setCount] = useState(start);
+
+  useEffect(() => {
+    document.title = "Total: " + count;
+  }, [count]);
+
+  const inc = () => setCount(count + step);
+  return { count, inc };
+}` },
+  'styles.css': { lang:'css', code:
+`/* Claudy · tarjeta */
+:root {
+  --radius: 14px;
+  --gap: 1.5rem;
+}
+
+.card {
+  background: #18171e;
+  border-radius: var(--radius);
+  padding: var(--gap);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+@media (max-width: 640px) {
+  .card { padding: 1rem; }
+}` },
+  'server.js': { lang:'javascript', code:
+`const http = require("http");
+const PORT = 3000;
+
+// rutas basicas
+const routes = {
+  "/": "Hola Claudy",
+  "/ping": "pong",
+};
+
+const server = http.createServer((req, res) => {
+  const body = routes[req.url] || "404";
+  res.writeHead(body === "404" ? 404 : 200);
+  res.end(body);
+});
+
+server.listen(PORT, () => console.log("activo en " + PORT));` },
+  'app.py': { lang:'python', code:
+`import os
+from dataclasses import dataclass
+
+@dataclass
+class User:
+    name: str
+    age: int = 0
+
+# saluda al usuario
+def greet(user: User) -> str:
+    if user.age >= 18:
+        return "hola " + user.name
+    return "menor de edad"
+
+if __name__ == "__main__":
+    print(greet(User("Claudy", 25)))` },
+  'config.json': { lang:'json', code:
+`{
+  "name": "claudy-theme",
+  "version": "0.1.0",
+  "private": true,
+  "themes": ["dark", "forest", "ocean", "minimal"],
+  "settings": { "port": 7333, "live": true }
+}` },
+  'main.go': { lang:'go', code:
+`package main
+
+import "fmt"
+
+// suma dos numeros
+func add(a, b int) int {
+  return a + b
+}
+
+func main() {
+  total := add(2, 40)
+  fmt.Println("total:", total)
+}` },
 };
 const FILES = {};
-for(const k in BUILTIN) FILES[k] = {builtin:true, lines:BUILTIN[k]};
+for(const k in BUILTIN){
+  const b = BUILTIN[k];
+  let html;
+  try { html = hljs.highlight(b.code, {language:b.lang}).value; }
+  catch(e){ html = hljs.highlightAuto(b.code).value; }
+  FILES[k] = { builtin:true, html, n:(b.code.match(/\n/g)||[]).length + 1 };
+}
 let currentFile = Object.keys(FILES)[0];
 const EXT_LANG = {ts:'typescript',tsx:'typescript',js:'javascript',jsx:'javascript',
   css:'css',scss:'scss',less:'less',html:'xml',xml:'xml',json:'json',py:'python',
@@ -239,13 +326,8 @@ function renderCode(){
   const g=document.getElementById('gutter'), c=document.getElementById('code');
   const f=FILES[currentFile];
   if(!f){ g.textContent=''; c.innerHTML=''; return; }
-  if(f.builtin){
-    g.textContent=f.lines.map((_,i)=>i+1).join('\n');
-    c.innerHTML=f.lines.map((l,i)=>'<span class="ln'+(i===6?' active':'')+'">'+(l||' ')+'</span>').join('');
-  } else {
-    g.textContent=Array.from({length:f.n},(_,i)=>i+1).join('\n');
-    c.innerHTML=f.html;
-  }
+  g.textContent=Array.from({length:f.n},(_,i)=>i+1).join('\n');
+  c.innerHTML=f.html;
 }
 function loadFile(file){
   const r=new FileReader();
